@@ -15,24 +15,22 @@
 #include "Adafruit_MQTT.h"
 #include "Adafruit_MQTT_Client.h"
 
+//need to import temp_reader so we can grab values for meat_temp and grill_temp
+
 // function prototypes
 void connect(void);
 
-/****************************** Pins ******************************************/
-
-#define PHOTOCELL       A0  // analog 0
-
 /************************* WiFi Access Point *********************************/
-
-#define WLAN_SSID       "...your SSID..."
-#define WLAN_PASS       "...your password..."
+//should be handled in temp_reader
+//#define WLAN_SSID       "...your SSID..."
+//#define WLAN_PASS       "...your password..."
 
 /************************* Adafruit.io Setup *********************************/
 
 #define AIO_SERVER      "io.adafruit.com"
 #define AIO_SERVERPORT  1883
-#define AIO_USERNAME    "...your AIO username (see https://accounts.adafruit.com)..."
-#define AIO_KEY         "...your AIO key..."
+#define AIO_USERNAME    "tdcrenshaw"
+#define AIO_KEY         "6223252d03f04a04bcca6538b8fc2470"
 
 /************ Global State (you don't need to change this!) ******************/
 
@@ -56,37 +54,33 @@ Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, AIO_SERVERPORT, MQTT_CLIENTID, M
 
 // Setup a feed called 'photocell' for publishing changes.
 // Notice MQTT paths for AIO follow the form: <username>/feeds/<feedname>
-const char PHOTOCELL_FEED[] PROGMEM = AIO_USERNAME "/feeds/photocell";
-Adafruit_MQTT_Publish photocell = Adafruit_MQTT_Publish(&mqtt, PHOTOCELL_FEED);
+const char meat_temp_feed[] PROGMEM = AIO_USERNAME "/feeds/meat-temp";
+Adafruit_MQTT_Publish meat_temp = Adafruit_MQTT_Publish(&mqtt, meat_temp_feed);
 
 /*************************** Sketch Code ************************************/
 
-// photocell state
-int current = 0;
-int last = -1;
-
 void setup() {
 
-  Serial.begin(115200);
 
-  Serial.println(F("Adafruit IO Example"));
+//  Serial.begin(115200);
 
-  // Connect to WiFi access point.
-  Serial.println(); Serial.println();
-  delay(10);
-  Serial.print(F("Connecting to "));
-  Serial.println(WLAN_SSID);
-
-  WiFi.begin(WLAN_SSID, WLAN_PASS);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(F("."));
-  }
-  Serial.println();
-
-  Serial.println(F("WiFi connected"));
-  Serial.println(F("IP address: "));
-  Serial.println(WiFi.localIP());
+  //commented out because we won't need it
+  // // Connect to WiFi access point.
+  // Serial.println(); Serial.println();
+  // delay(10);
+  // Serial.print(F("Connecting to "));
+  // Serial.println(WLAN_SSID);
+  //
+  // WiFi.begin(WLAN_SSID, WLAN_PASS);
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   delay(500);
+  //   Serial.print(F("."));
+  // }
+  // Serial.println();
+  //
+  // Serial.println(F("WiFi connected"));
+  // Serial.println(F("IP address: "));
+  // Serial.println(WiFi.localIP());
 
   // connect to adafruit io
   connect();
@@ -102,24 +96,25 @@ void loop() {
       connect();
   }
 
+//pull from meat_temp
   // grab the current state of the photocell
-  current = analogRead(PHOTOCELL);
+  //current = analogRead(PHOTOCELL);
 
   // return if the value hasn't changed
   if(current == last)
     return;
 
   // Now we can publish stuff!
-  Serial.print(F("\nSending photocell value: "));
+  Serial.print(F("\nSending the meat temperature: "));
   Serial.print(current);
   Serial.print("... ");
 
-  if (! photocell.publish((int32_t)current))
+  if (! meat_temp.publish((int32_t)current))
     Serial.println(F("Failed."));
   else
     Serial.println(F("Success!"));
 
-  // save the photocell state
+  // save the last meat temp
   last = current;
 
 }
