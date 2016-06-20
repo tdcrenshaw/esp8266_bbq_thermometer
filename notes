@@ -1,0 +1,22 @@
+stealing lots of stuff from http://www.universalmind.com/blog/technology/smoking-meat-with-the-internet-of-things/
+and https://learn.adafruit.com/thermistor/using-a-thermistor
+
+will have a meat_probe and a grill_probe
+
+need to figure out the beta-coefficient of the thermistor
+
+using adafruit.io mqtt broker paired with ifttt for monitoring / notifications
+    https://learn.adafruit.com/using-ifttt-with-adafruit-io/arduino-code-1
+    https://learn.adafruit.com/adafruit-io/projects
+
+ifttt Recipe ID 38435902
+    checking to see if meat_temp from adafruit.io is >= 135
+    value can be edited in app
+    should notify android phone
+
+adafruit.io key: 6223252d03f04a04bcca6538b8fc2470
+username: tdcrenshaw
+    meat-temp is key for meat_temp
+    grill-temp ......
+    double check that the - vs _ is correct in mqtt_updater
+    dashboard for pretty viewing https://io.adafruit.com/tdcrenshaw/bbq-thermometer
