@@ -54,7 +54,7 @@ void loop(void) {
   steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
   steinhart += 1.0 / (TEMPERATURENOMINAL + 273.15); // + (1/To)
   steinhart = 1.0 / steinhart;                 // Invert
-  steinhart = steinhart * 9 / 5 - 459.67;     // convert to F
+  steinhart = steinhart * 9 / 5 - 459.67;     // convert to F double check this, I changed it from c to f conversion
 
   Serial.print("Temperature ");
   Serial.print(steinhart);
