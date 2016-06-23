@@ -2,7 +2,8 @@
 #import esp8266
 
 // which analog pin to connect
-#define THERMISTORPIN A0
+#define GrillTempPin A0
+#define MeatTempPin
 // resistance at 25 degrees C
 #define THERMISTORNOMINAL 10000
 // temp. for nominal resistance (almost always 25 C)
@@ -24,8 +25,30 @@ void setup(void) {
 
 void loop(void) {
   uint8_t i;
-  float average;
+  
+  float GrillAverage;
+  float MeatAverage;
+  float GrillConverted;
+  float MeatConverted;
+  
+  GrillAverage = sample(GrillTempPin);
+  MeatAverage = sample(MeatTempPin);
+  
+  GrillConverted = convert(GrillAverage);
+  MeatConverted = convert(MeatAverage);
+  
+  Serial.println("Grill Temp is: ");
+  Serial.print(GrillConverted);
+  
+  Serial.println("Meat Temp is: ");
+  Serial.print(MeatConverted);
 
+  delay(1000);
+}
+
+void sample(pin) {
+  float average;
+  
   // take N samples in a row, with a slight delay
   for (i=0; i< NUMSAMPLES; i++) {
    samples[i] = analogRead(THERMISTORPIN);
@@ -41,7 +64,11 @@ void loop(void) {
 
   Serial.print("Average analog reading ");
   Serial.println(average);
+  return(average) 
+}
 
+void convert(average) {
+  
   // convert the value to resistance
   average = 1023 / average - 1;
   average = SERIESRESISTOR / average;
@@ -59,6 +86,7 @@ void loop(void) {
   Serial.print("Temperature ");
   Serial.print(steinhart);
   Serial.println(" *F");
-
-  delay(1000);
+  
+  return(stienhart)
+}
 }
