@@ -26,3 +26,6 @@ Use this library for writing to the oled
 
 here's how to "multiplex" two analog inputs
     https://hackaday.io/project/8435-2-analog-inputs-for-esp8266-without-multiplexer
+
+probe info
+    https://github.com/CapnBry/HeaterMeter/wiki/HeaterMeter-Probes
