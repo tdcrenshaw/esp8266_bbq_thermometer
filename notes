@@ -20,6 +20,9 @@ username: tdcrenshaw
     grill-temp ......
     double check that the - vs _ is correct in mqtt_updater
     dashboard for pretty viewing https://io.adafruit.com/tdcrenshaw/bbq-thermometer
-    
+
 Use this library for writing to the oled
     https://github.com/squix78/esp8266-oled-ssd1306
+
+here's how to "multiplex" two analog inputs
+    https://hackaday.io/project/8435-2-analog-inputs-for-esp8266-without-multiplexer
