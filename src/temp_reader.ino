@@ -59,7 +59,7 @@ Adafruit_MQTT_Publish GrillTemp = Adafruit_MQTT_Publish(&mqtt, GrillTempFeed);
 
 //for now, we'll say one. Change to two when we get another themistor
 //done globably so there's no fuckery with returns and arrarys
-float TempSamples[0];
+float TempSamples;
 
 int samples[NUMSAMPLES];
 
@@ -103,13 +103,15 @@ void loop(void) {
 
   convert();
   Serial.print("Grill Temp is: ");
-  Serial.println(TempSamples[0]);
+  Serial.println(TempSamples);
   Serial.println();
   // Serial.println("Meat Temp is: ");
-  // Serial.print(TempSamples[1]);
+  // Serial.print(REMOVE);
+
+  //mqtt_upload();
 
   displaytemp();
-  //mqtt_upload();
+
   delay(1000);
 }
 
@@ -118,47 +120,45 @@ void sample() {
 
     //might could make sizeof work here, but it returns byte size
     //for now I want it to run once, will run twice eventually
-    for (int z=0; z<1; z++) {
-      // take N samples in a row, with a slight delay
-      for (int i=0; i< NUMSAMPLES; i++) {
-       samples[i] = analogRead(pin);
-       delay(10);
-      }
 
-      // average all the samples out
-      TempSamples[z] = 0;
-      for (int i=0; i< NUMSAMPLES; i++) {
-         TempSamples[z] += samples[i];
-      }
-      TempSamples[z] /= NUMSAMPLES;
-
-      Serial.print("Average analog reading " + String(z) + ": ");
-      Serial.println(TempSamples[z]);
-
+    // take N samples in a row, with a slight delay
+    for (int i=0; i< NUMSAMPLES; i++) {
+    samples[i] = analogRead(pin);
+    delay(10);
     }
+
+    // average all the samples out
+    TempSamples = 0;
+    for (int i=0; i< NUMSAMPLES; i++) {
+     TempSamples += samples[i];
+    }
+    TempSamples /= NUMSAMPLES;
+
+    Serial.print("Average analog reading: ");
+    Serial.println(TempSamples);
+
+
 
 }
 void convert() {
-    for (int z=0; z<1; z++) {
-        // convert the value to resistance
-        TempSamples[z] = 1023 / TempSamples[z] - 1;
-        TempSamples[z] = SERIESRESISTOR / TempSamples[z];
-        Serial.print("Thermistor resistance " + String(z) + ": ");
-        Serial.println(TempSamples[z]);
+    // convert the value to resistance
+    TempSamples = 1023 / TempSamples - 1;
+    TempSamples = SERIESRESISTOR / TempSamples;
+    Serial.print("Thermistor resistance: ");
+    Serial.println(TempSamples);
 
-        float steinhart;
-        steinhart = TempSamples[z] / THERMISTORNOMINAL;     // (R/Ro)
-        steinhart = log(steinhart);                  // ln(R/Ro)
-        steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
-        steinhart += 1.0 / (TEMPERATURENOMINAL + 273.15); // + (1/To)
-        steinhart = 1.0 / steinhart;                 // Invert
-        TempSamples[z] = steinhart * 9 / 5 - 459.67;     // convert to F double check this, I changed it from c to f conversion
+    float steinhart;
+    steinhart = TempSamples / THERMISTORNOMINAL;     // (R/Ro)
+    steinhart = log(steinhart);                  // ln(R/Ro)
+    steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
+    steinhart += 1.0 / (TEMPERATURENOMINAL + 273.15); // + (1/To)
+    steinhart = 1.0 / steinhart;                 // Invert
+    TempSamples = steinhart * 9 / 5 - 459.67;     // convert to F double check this, I changed it from c to f conversion
 
-        // Serial.print("Temperature ");
-        // Serial.print(TempSamples[z]);
-        // Serial.println(" *F");
+    // Serial.print("Temperature ");
+    // Serial.print(TempSamples);
+    // Serial.println(" *F");
 
-        }
     }
 
 
@@ -169,9 +169,8 @@ void mqtt_upload() {
       if(! mqtt.connected())
         connect();
     }
-    int current = random(175,600);
-    Serial.println("About to hit dat mqtt");
-    if (! GrillTemp.publish((int32_t)current))
+
+    if (! GrillTemp.publish((int32_t)TempSamples))
       Serial.println(F("Grill upload failed."));
     else
       Serial.println(F("Grill upload Success!"));
@@ -181,12 +180,12 @@ void mqtt_upload() {
 void displaytemp() {
 
     //for rounding
-    TempSamples[0] = TempSamples[0] + .5;
-    // TempSamples[1] = TempSamples[1] + .5;
+    TempSamples = TempSamples + .5;
+    // REMOVE = REMOVE + .5;
 
     //convert to int to fit on screen better
-    String GrillString = " Grill: " + String(int(TempSamples[0]));
-    // String MeatString = "Meat: " + String(int(TempSamples[1]));
+    String GrillString = " Grill: " + String(int(TempSamples));
+    // String MeatString = "Meat: " + String(int(REMOVE));
     display.clear();
     display.setTextAlignment(TEXT_ALIGN_LEFT);
     display.drawString(3,10, GrillString);
