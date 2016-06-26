@@ -108,7 +108,7 @@ void loop(void) {
   // Serial.println("Meat Temp is: ");
   // Serial.print(REMOVE);
 
-  //mqtt_upload();
+  mqtt_upload();
 
   displaytemp();
 
