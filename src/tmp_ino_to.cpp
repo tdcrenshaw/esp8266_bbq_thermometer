@@ -1,3 +1,5 @@
+#include <Arduino.h>
+#line 1 "/home/tyler/Arduino/esp8266_bbq_thermometer/src/temp_reader.ino"
 //here's where we read the temp
 #include <ESP8266WiFi.h>
 #include "Adafruit_MQTT.h"
@@ -59,6 +61,21 @@ float TempSamples[1];
 
 int samples[NUMSAMPLES];
 
+void setup(void);
+
+void loop(void);
+
+void sample();
+void convert();
+
+
+void mqtt_upload();
+
+
+void displaytemp();
+
+void connect();
+#line 62 "/home/tyler/Arduino/esp8266_bbq_thermometer/src/temp_reader.ino"
 void setup(void) {
   Serial.begin(115200);
   //analogReference(EXTERNAL);
