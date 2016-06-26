@@ -5,11 +5,16 @@
 #include <Wire.h>
 #include "SSD1306.h"
 #include "font.h"
+
+//defining display pins
 SSD1306  display(0x3c, D3, D5);
 
 //WiFi info
-#define WLAN_SSID       "Pretty Fly For a Wifi"
+#define WLAN_SSID       "Pretty Fly For a WiFi"
 #define WLAN_PASS       "cubagoodingjr"
+
+// Create an ESP8266 WiFiClient class to connect to the MQTT server.
+WiFiClient client;
 
 
 //adafruit.io credentials
@@ -17,9 +22,6 @@ SSD1306  display(0x3c, D3, D5);
 #define AIO_SERVERPORT  1883
 #define AIO_USERNAME    "tdcrenshaw"
 #define AIO_KEY "6223252d03f04a04bcca6538b8fc2470"
-
-// Create an ESP8266 WiFiClient class to connect to the MQTT server.
-WiFiClient client;
 
 // Store the MQTT server, client ID, username, and password in flash memory.
 // This is required for using the Adafruit MQTT library.
@@ -34,10 +36,12 @@ const char MQTT_PASSWORD[] PROGMEM  = AIO_KEY;
 // Setup the MQTT client class by passing in the WiFi client and MQTT server and login details.
 Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, AIO_SERVERPORT, MQTT_CLIENTID, MQTT_USERNAME, MQTT_PASSWORD);
 
-// Setup a feed called 'photocell' for publishing changes.
+// Setup a feed called 'grill-temp' for publishing changes.
 // Notice MQTT paths for AIO follow the form: <username>/feeds/<feedname>
 const char GrillTempFeed[] PROGMEM = AIO_USERNAME "/feeds/grill-temp";
 Adafruit_MQTT_Publish GrillTemp = Adafruit_MQTT_Publish(&mqtt, GrillTempFeed);
+
+
 // which analog pin to connect
 //pins will be multiplexed
 #define pin A0
@@ -47,7 +51,7 @@ Adafruit_MQTT_Publish GrillTemp = Adafruit_MQTT_Publish(&mqtt, GrillTempFeed);
 #define TEMPERATURENOMINAL 25
 // how many samples to take and average, more takes longer
 // but is more 'smooth'
-#define NUMSAMPLES 15
+#define NUMSAMPLES 50
 // The beta coefficient of the thermistor (usually 3000-4000)
 #define BCOEFFICIENT 3950
 // the value of the 'other' resistor
@@ -55,7 +59,7 @@ Adafruit_MQTT_Publish GrillTemp = Adafruit_MQTT_Publish(&mqtt, GrillTempFeed);
 
 //for now, we'll say one. Change to two when we get another themistor
 //done globably so there's no fuckery with returns and arrarys
-float TempSamples[1];
+float TempSamples[0];
 
 int samples[NUMSAMPLES];
 
@@ -66,6 +70,10 @@ void setup(void) {
   display.init();
   display.flipScreenVertically();
   display.setFont(Droid_Sans_Bold_25);
+  display.clear();
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64,20, "Let's Grill!!");
+  display.display();
 
   // Connect to WiFi access point.
   Serial.println(); Serial.println();
@@ -94,17 +102,14 @@ void loop(void) {
   sample();
 
   convert();
-
-  Serial.println("Grill Temp is: ");
-  Serial.print(TempSamples[0]);
-
-  Serial.println("Meat Temp is: ");
-  Serial.print(TempSamples[1]);
-
-  mqtt_upload();
+  Serial.print("Grill Temp is: ");
+  Serial.println(TempSamples[0]);
+  Serial.println();
+  // Serial.println("Meat Temp is: ");
+  // Serial.print(TempSamples[1]);
 
   displaytemp();
-
+  //mqtt_upload();
   delay(1000);
 }
 
@@ -127,7 +132,7 @@ void sample() {
       }
       TempSamples[z] /= NUMSAMPLES;
 
-      Serial.print("Average analog reading ");
+      Serial.print("Average analog reading " + String(z) + ": ");
       Serial.println(TempSamples[z]);
 
     }
@@ -138,7 +143,7 @@ void convert() {
         // convert the value to resistance
         TempSamples[z] = 1023 / TempSamples[z] - 1;
         TempSamples[z] = SERIESRESISTOR / TempSamples[z];
-        Serial.print("Thermistor resistance ");
+        Serial.print("Thermistor resistance " + String(z) + ": ");
         Serial.println(TempSamples[z]);
 
         float steinhart;
@@ -147,11 +152,12 @@ void convert() {
         steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
         steinhart += 1.0 / (TEMPERATURENOMINAL + 273.15); // + (1/To)
         steinhart = 1.0 / steinhart;                 // Invert
-        steinhart = steinhart * 9 / 5 - 459.67;     // convert to F double check this, I changed it from c to f conversion
+        TempSamples[z] = steinhart * 9 / 5 - 459.67;     // convert to F double check this, I changed it from c to f conversion
 
-        Serial.print("Temperature ");
-        Serial.print(steinhart);
-        Serial.println(" *F");
+        // Serial.print("Temperature ");
+        // Serial.print(TempSamples[z]);
+        // Serial.println(" *F");
+
         }
     }
 
@@ -163,7 +169,9 @@ void mqtt_upload() {
       if(! mqtt.connected())
         connect();
     }
-    if (! GrillTemp.publish((int32_t)TempSamples[0]))
+    int current = random(175,600);
+    Serial.println("About to hit dat mqtt");
+    if (! GrillTemp.publish((int32_t)current))
       Serial.println(F("Grill upload failed."));
     else
       Serial.println(F("Grill upload Success!"));
@@ -174,15 +182,15 @@ void displaytemp() {
 
     //for rounding
     TempSamples[0] = TempSamples[0] + .5;
-    TempSamples[1] = TempSamples[1] + .5;
+    // TempSamples[1] = TempSamples[1] + .5;
 
     //convert to int to fit on screen better
     String GrillString = " Grill: " + String(int(TempSamples[0]));
-    String MeatString = "Meat: " + String(int(TempSamples[1]));
+    // String MeatString = "Meat: " + String(int(TempSamples[1]));
     display.clear();
     display.setTextAlignment(TEXT_ALIGN_LEFT);
     display.drawString(3,10, GrillString);
-    display.drawString(0,33, MeatString);
+//    display.drawString(0,33, MeatString);
     display.display();
 
 }
