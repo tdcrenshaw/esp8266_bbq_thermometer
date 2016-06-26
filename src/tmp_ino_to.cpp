@@ -1,3 +1,5 @@
+#include <Arduino.h>
+#line 1 "/home/tyler/Arduino/esp8266_bbq_thermometer/src/temp_reader.ino"
 //here's where we read the temp
 #include <ESP8266WiFi.h>
 #include <Wire.h>
@@ -40,6 +42,16 @@ float TempSamples;
 
 int samples[NUMSAMPLES];
 
+void setup(void);
+
+void loop(void);
+
+void sample();
+void convert();
+
+void displaytemp();
+void uploaddata();
+#line 43 "/home/tyler/Arduino/esp8266_bbq_thermometer/src/temp_reader.ino"
 void setup(void) {
   Serial.begin(9600);
   //analogReference(EXTERNAL);
