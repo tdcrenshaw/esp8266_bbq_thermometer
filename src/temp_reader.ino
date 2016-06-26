@@ -1,7 +1,7 @@
-//here's where we read the temp
+//Tyler Crenshaw
+//insert open software info here
 #include <ESP8266WiFi.h>
-#include "Adafruit_MQTT.h"
-#include "Adafruit_MQTT_Client.h"
+
 #include <Wire.h>
 #include "SSD1306.h"
 #include "font.h"
@@ -13,34 +13,10 @@ SSD1306  display(0x3c, D3, D5);
 #define WLAN_SSID       "Pretty Fly For a WiFi"
 #define WLAN_PASS       "cubagoodingjr"
 
-// Create an ESP8266 WiFiClient class to connect to the MQTT server.
-WiFiClient client;
-
-
-//adafruit.io credentials
-#define AIO_SERVER      "io.adafruit.com"
-#define AIO_SERVERPORT  1883
-#define AIO_USERNAME    "tdcrenshaw"
-#define AIO_KEY "6223252d03f04a04bcca6538b8fc2470"
-
-// Store the MQTT server, client ID, username, and password in flash memory.
-// This is required for using the Adafruit MQTT library.
-const char MQTT_SERVER[] PROGMEM    = AIO_SERVER;
-// Set a unique MQTT client ID using the AIO key + the date and time the sketch
-// was compiled (so this should be unique across multiple devices for a user,
-// alternatively you can manually set this to a GUID or other random value).
-const char MQTT_CLIENTID[] PROGMEM  = __TIME__ AIO_USERNAME;
-const char MQTT_USERNAME[] PROGMEM  = AIO_USERNAME;
-const char MQTT_PASSWORD[] PROGMEM  = AIO_KEY;
-
-// Setup the MQTT client class by passing in the WiFi client and MQTT server and login details.
-Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, AIO_SERVERPORT, MQTT_CLIENTID, MQTT_USERNAME, MQTT_PASSWORD);
-
-// Setup a feed called 'grill-temp' for publishing changes.
-// Notice MQTT paths for AIO follow the form: <username>/feeds/<feedname>
-const char GrillTempFeed[] PROGMEM = AIO_USERNAME "/feeds/grill-temp";
-Adafruit_MQTT_Publish GrillTemp = Adafruit_MQTT_Publish(&mqtt, GrillTempFeed);
-
+//sparkfun connection info
+const char* host = "data.sparkfun.com";
+const char* publicKey = "RM4KV6gqxWcGv5gwvgnb";
+const char* privateKey = "lzNeK5qpEkCeyKrByrvY";
 
 // which analog pin to connect
 //pins will be multiplexed
@@ -92,8 +68,6 @@ void setup(void) {
   Serial.println(F("IP address: "));
   Serial.println(WiFi.localIP());
 
-  // connect to adafruit io
-  connect();
 }
 
 void loop(void) {
@@ -109,8 +83,11 @@ void loop(void) {
   // Serial.print(TempSamples[1]);
 
   displaytemp();
-  //mqtt_upload();
-  delay(1000);
+
+  //put uploader in an interrupt so we don't get banned from sparkfun
+  //http_upload();
+
+  //delay(1000);
 }
 
 void sample() {
@@ -161,23 +138,6 @@ void convert() {
         }
     }
 
-
-void mqtt_upload() {
-    // ping adafruit io a few times to make sure we remain connected
-    if(! mqtt.ping(3)) {
-      // reconnect to adafruit io
-      if(! mqtt.connected())
-        connect();
-    }
-    int current = random(175,600);
-    Serial.println("About to hit dat mqtt");
-    if (! GrillTemp.publish((int32_t)current))
-      Serial.println(F("Grill upload failed."));
-    else
-      Serial.println(F("Grill upload Success!"));
-}
-
-
 void displaytemp() {
 
     //for rounding
@@ -194,33 +154,38 @@ void displaytemp() {
     display.display();
 
 }
-
-void connect() {
-
-    Serial.print(F("Connecting to Adafruit IO... "));
-
-    int8_t ret;
-
-    while ((ret = mqtt.connect()) != 0) {
-
-    switch (ret) {
-      case 1: Serial.println(F("Wrong protocol")); break;
-      case 2: Serial.println(F("ID rejected")); break;
-      case 3: Serial.println(F("Server unavail")); break;
-      case 4: Serial.println(F("Bad user/pass")); break;
-      case 5: Serial.println(F("Not authed")); break;
-      case 6: Serial.println(F("Failed to subscribe")); break;
-      default: Serial.println(F("Connection failed")); break;
-    }
-
-    if(ret >= 0)
-      mqtt.disconnect();
-
-    Serial.println(F("Retrying connection..."));
-    delay(5000);
-
-    }
-
-    Serial.println(F("Adafruit IO Connected!"));
-
-    }
+// void http_upload() {
+//     Serial.println("trying http upload");
+//     // Create an ESP8266 WiFiClient class to connect to the http server.
+//     WiFiClient client;
+//     const int httpPort = 80;
+//     if (!client.connect(host, httpPort)) {
+//       Serial.println("connection failed");
+//       return;
+//     }
+//       // We now create a URI for the request
+//       String url = "/input/";
+//       url += publicKey;
+//       url += "?private_key=";
+//       url += privateKey;
+//       url += "&grilltemp=";
+//       url += TempSamples[0];
+//
+//       Serial.print("Requesting URL: ");
+//       Serial.println(url);
+//
+//       // This will send the request to the server
+//       client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+//                    "Host: " + host + "\r\n" +
+//                    "Connection: close\r\n\r\n");
+//       delay(10);
+//
+//       // Read all the lines of the reply from server and print them to Serial
+//       while(client.available()){
+//         String line = client.readStringUntil('\r');
+//         Serial.print(line);
+//       }
+//
+//       Serial.println();
+//       Serial.println("closing connection");
+// }
