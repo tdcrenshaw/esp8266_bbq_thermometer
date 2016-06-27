@@ -15,7 +15,7 @@ SSD1306  display(0x3c, D3, D5);
 #define WLAN_PASS       "cubagoodingjr"
 
 //set target temp in F here
-int TargetTemp = 135;
+int TargetTemp = 110;
 int TempTrigger = 0;
 
 // Create an ESP8266 WiFiClient class to connect to the MQTT server.
@@ -129,7 +129,8 @@ void loop(void) {
 
   displaytemp();
 
-  mqtt_upload();
+  //turned off uploading for now
+  //mqtt_upload();
 
   delay(1000);
 }
@@ -153,6 +154,7 @@ void sample() {
     }
     GrillTemp /= NUMSAMPLES;
 
+    Serial.println();
     Serial.print("Average analog reading: ");
     Serial.println(GrillTemp);
 }
@@ -255,7 +257,7 @@ void SendNotification() {
         Serial.println("certificate doesn't match");
     }
     String url = "/v2/pushes";
-    String messagebody = "{\"type\": \"note\", \"title\": \"Meat is Ready!!!\", \"body\": \"The Meat is Currently at the target temp\"}\r\n";
+    String messagebody = "{\"type\": \"note\", \"title\": \"Meat is Ready!!!\", \"body\": \"The Meat is currently at " + String(GrillTemp) + " degrees F\"}\r\n";
     Serial.print("requesting URL: ");
     Serial.println(url);
 
