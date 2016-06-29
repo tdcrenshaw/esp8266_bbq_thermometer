@@ -38,14 +38,14 @@ WiFiClient client;
 //pins will be multiplexed
 #define pin A0
 // resistance at 25 degrees C
-#define THERMISTORNOMINAL 10000
+#define THERMISTORNOMINAL 2000000
 // temp. for nominal resistance (almost always 25 C)
 #define TEMPERATURENOMINAL 25
 // how many samples to take and average, more takes longer
 // but is more 'smooth'
 #define NUMSAMPLES 50
 // The beta coefficient of the thermistor (usually 3000-4000)
-#define BCOEFFICIENT 3950
+#define BCOEFFICIENT 3423
 // the value of the 'other' resistor
 #define SERIESRESISTOR 10000
 
