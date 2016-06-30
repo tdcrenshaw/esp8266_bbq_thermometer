@@ -13,7 +13,7 @@ SSD1306  display(0x3c, D3, D5);
 #define WLAN_PASS       "cubagoodingjr"
 
 //set target temp in F here
-int TargetTemp = 110;
+int TargetTemp = 700;
 int TempTrigger = 0;
 
 //sparkfun info
@@ -37,6 +37,9 @@ WiFiClient client;
 // which analog pin to connect
 //pins will be multiplexed
 #define pin A0
+// #define MeatPin D1
+// #define GrillPin D2
+
 // resistance at 25 degrees C
 #define THERMISTORNOMINAL 2000000
 // temp. for nominal resistance (almost always 25 C)
@@ -49,9 +52,10 @@ WiFiClient client;
 // the value of the 'other' resistor
 #define SERIESRESISTOR 10000
 
-//for now, we'll say one. Change to two when we get another themistor
-//done globably so there's no fuckery with returns and arrarys
+
+
 float GrillTemp;
+float MeatTemp;
 
 int samples[NUMSAMPLES];
 
@@ -83,22 +87,25 @@ void setup(void) {
   Serial.println(F("WiFi connected"));
   Serial.println(F("IP address: "));
   Serial.println(WiFi.localIP());
-
+  
 }
 
 void loop(void) {
   uint8_t i;
 
-  sample();
+  SampleGrill();
+  SampleMeat();
 
   convert();
+
   Serial.print("Grill Temp is: ");
   Serial.println(GrillTemp);
   Serial.println();
-  // Serial.println("Meat Temp is: ");
-  // Serial.print(GrillTemp[1]);
+  Serial.print("Meat Temp is: ");
+  Serial.println(MeatTemp);
+  Serial.println();
 
-  if (GrillTemp > TargetTemp && TempTrigger == 0){
+  if (MeatTemp > TargetTemp && TempTrigger == 0){
       SendNotification();
       TempTrigger = 1;
   }
@@ -110,9 +117,11 @@ void loop(void) {
   delay(1000);
 }
 
-void sample() {
+void SampleGrill() {
 
-
+    pinMode(5,INPUT);
+    pinMode(4,OUTPUT);
+    digitalWrite(4,LOW);
     //might could make sizeof work here, but it returns byte size
     //for now I want it to run once, will run twice eventually
     // take N samples in a row, with a slight delay
@@ -130,14 +139,42 @@ void sample() {
 
     Serial.print("Average analog reading: ");
     Serial.println(GrillTemp);
-
-}
-void convert() {
-
     GrillTemp = 1023 / GrillTemp - 1;
     GrillTemp = SERIESRESISTOR / GrillTemp;
     Serial.print("Thermistor resistance: ");
     Serial.println(GrillTemp);
+
+}
+
+void SampleMeat() {
+
+    pinMode(4,INPUT);
+    pinMode(5,OUTPUT);
+    digitalWrite(5,LOW);
+    //might could make sizeof work here, but it returns byte size
+    //for now I want it to run once, will run twice eventually
+    // take N samples in a row, with a slight delay
+    for (int i=0; i< NUMSAMPLES; i++) {
+    samples[i] = analogRead(pin);
+    delay(10);
+    }
+
+    // average all the samples out
+    MeatTemp = 0;
+    for (int i=0; i< NUMSAMPLES; i++) {
+     MeatTemp += samples[i];
+    }
+    MeatTemp /= NUMSAMPLES;
+
+    Serial.print("Average analog reading: ");
+    Serial.println(MeatTemp);
+    MeatTemp = 1023 / MeatTemp - 1;
+    MeatTemp = SERIESRESISTOR / MeatTemp;
+    Serial.print("Thermistor resistance: ");
+    Serial.println(MeatTemp);
+}
+
+void convert() {
 
     float steinhart;
     steinhart = GrillTemp / THERMISTORNOMINAL;     // (R/Ro)
@@ -145,27 +182,36 @@ void convert() {
     steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
     steinhart += 1.0 / (TEMPERATURENOMINAL + 273.15); // + (1/To)
     steinhart = 1.0 / steinhart;                 // Invert
-    GrillTemp = steinhart * 9 / 5 - 459.67;     // convert to F double check this, I changed it from c to f conversion
+    GrillTemp = steinhart * 9 / 5 - 459.67;     // K to F conversion
 
-    // Serial.print("Temperature ");
-    // Serial.print(GrillTemp[z]);
-    // Serial.println(" *F");
-
-
+    steinhart = MeatTemp / THERMISTORNOMINAL;     // (R/Ro)
+    steinhart = log(steinhart);                  // ln(R/Ro)
+    steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
+    steinhart += 1.0 / (TEMPERATURENOMINAL + 273.15); // + (1/To)
+    steinhart = 1.0 / steinhart;                 // Invert
+    MeatTemp = steinhart * 9 / 5 - 459.67;     // K to F conversion
     }
 
 void displaytemp() {
+    //clear old data off screen
 
+    display.clear();
     //for rounding
     GrillTemp = GrillTemp + .5;
 
     //convert to int to fit on screen better
     String GrillString = " Grill: " + String(int(GrillTemp));
-    // String MeatString = "Meat: " + String(int(GrillTemp[1]));
-    display.clear();
     display.setTextAlignment(TEXT_ALIGN_LEFT);
     display.drawString(3,10, GrillString);
-//    display.drawString(0,33, MeatString);
+
+    //for rounding
+    MeatTemp = MeatTemp + .5;
+
+    //convert to int to fit on screen better
+    String MeatString = " Meat: " + String(int(MeatTemp));
+    display.setTextAlignment(TEXT_ALIGN_LEFT);
+    display.drawString(3,33, MeatString);
+
     display.display();
 }
 void uploaddata() {
@@ -177,6 +223,8 @@ void uploaddata() {
     url += privateKey;
     url += "&grilltemp=";
     url += GrillTemp;
+    url += "&meattemp=";
+    url += MeatTemp;
 
     Serial.print("Requesting URL: ");
     Serial.println(url);
@@ -219,7 +267,7 @@ void SendNotification() {
         Serial.println("certificate doesn't match");
     }
     String url = "/v2/pushes";
-    String messagebody = "{\"type\": \"note\", \"title\": \"Meat is Ready!!!\", \"body\": \"The Meat is currently at " + String(GrillTemp) + " degrees F\"}\r\n";
+    String messagebody = "{\"type\": \"note\", \"title\": \"Meat is Ready!!!\", \"body\": \"The Meat is currently at " + String(MeatTemp) + " degrees F\"}\r\n";
     Serial.print("requesting URL: ");
     Serial.println(url);
 
