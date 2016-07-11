@@ -38,16 +38,17 @@ WiFiClient client;
 //pins will be multiplexed
 #define pin A0
 // resistance at 25 degrees C
-#define THERMISTORNOMINAL 2000000
+#define THERMISTORNOMINAL 200000
 // temp. for nominal resistance (almost always 25 C)
 #define TEMPERATURENOMINAL 25
 // how many samples to take and average, more takes longer
 // but is more 'smooth'
-#define NUMSAMPLES 50
+#define NUMSAMPLES 15
 // The beta coefficient of the thermistor (usually 3000-4000)
-#define BCOEFFICIENT 3423
+#define BCOEFFICIENT 3500000
 // the value of the 'other' resistor
-#define SERIESRESISTOR 10000
+//trying 33k instead of 10k
+#define SERIESRESISTOR 33000
 
 //for now, we'll say one. Change to two when we get another themistor
 //done globably so there's no fuckery with returns and arrarys
@@ -99,13 +100,13 @@ void loop(void) {
   // Serial.print(GrillTemp[1]);
 
   if (GrillTemp > TargetTemp && TempTrigger == 0){
-      SendNotification();
+      //SendNotification();
       TempTrigger = 1;
   }
 
   displaytemp();
 
-  uploaddata();
+  //uploaddata();
 
   delay(1000);
 }
@@ -117,18 +118,20 @@ void sample() {
     //for now I want it to run once, will run twice eventually
     // take N samples in a row, with a slight delay
     for (int i=0; i< NUMSAMPLES; i++) {
-    samples[i] = analogRead(pin);
-    delay(10);
+        samples[i] = analogRead(pin);
+        delay(10);
     }
 
     // average all the samples out
     GrillTemp = 0;
     for (int i=0; i< NUMSAMPLES; i++) {
-     GrillTemp += samples[i];
+        GrillTemp += samples[i];
     }
+
+
     GrillTemp /= NUMSAMPLES;
 
-    Serial.print("Average analog reading: ");
+    Serial.println("Average analog reading: ");
     Serial.println(GrillTemp);
 
 }
