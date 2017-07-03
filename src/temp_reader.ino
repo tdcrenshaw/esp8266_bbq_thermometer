@@ -9,8 +9,12 @@
 SSD1306  display(0x3c, D3, D5);
 
 //WiFi info
-#define WLAN_SSID       "Pretty Fly For a WiFi"
-#define WLAN_PASS       "cubagoodingjr"
+//#define WLAN_SSID       "Pretty Fly For a WiFi"
+//#define WLAN_PASS       "cubagoodingjr"
+
+
+#define WLAN_SSID       "theBeachHouse"
+#define WLAN_PASS       "rolltide2"
 
 //set target temp in F here
 int TargetTemp = 110;
@@ -38,17 +42,21 @@ WiFiClient client;
 //pins will be multiplexed
 #define pin A0
 // resistance at 25 degrees C
-#define THERMISTORNOMINAL 200000
+#define THERMISTORNOMINAL 229479
 // temp. for nominal resistance (almost always 25 C)
 #define TEMPERATURENOMINAL 25
 // how many samples to take and average, more takes longer
 // but is more 'smooth'
 #define NUMSAMPLES 15
 // The beta coefficient of the thermistor (usually 3000-4000)
-#define BCOEFFICIENT 3500000
+// data sheet gives beta as "3500k at 25/85C"
+//I'm thinking K is the unit, not x1000
+#define BCOEFFICIENT 2937
 // the value of the 'other' resistor
 //trying 33k instead of 10k
-#define SERIESRESISTOR 33000
+//lets measure the resistance at room temperature and pick a resistor that matches that
+//data sheet says 200k
+#define SERIESRESISTOR 179000
 
 //for now, we'll say one. Change to two when we get another themistor
 //done globably so there's no fuckery with returns and arrarys
@@ -106,7 +114,7 @@ void loop(void) {
 
   displaytemp();
 
-  //uploaddata();
+//  uploaddata();
 
   delay(1000);
 }
@@ -139,6 +147,7 @@ void convert() {
 
     GrillTemp = 1023 / GrillTemp - 1;
     GrillTemp = SERIESRESISTOR / GrillTemp;
+		//this shoud correspond to a multimeter reading
     Serial.print("Thermistor resistance: ");
     Serial.println(GrillTemp);
 
